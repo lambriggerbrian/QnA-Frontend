@@ -1,3 +1,5 @@
+import { http } from '../Http';
+
 export interface QuestionData {
   questionId: number;
   title: string;
@@ -28,32 +30,82 @@ export interface PostAnswerData {
   created: Date;
 }
 
+export interface QuestionDataFromServer {
+  questionId: number;
+  title: string;
+  content: string;
+  userName: string;
+  created: string;
+  answers: AnswerDataFromServer[];
+}
+
+export interface AnswerDataFromServer {
+  answerId: number;
+  content: string;
+  userName: string;
+  created: string;
+}
+
+export const mapQuestionFromServer = (
+  question: QuestionDataFromServer,
+): QuestionData => ({
+  ...question,
+  created: new Date(question.created.substr(0, 19)),
+  answers: !question.answers
+    ? []
+    : question.answers.map((answer) => ({
+        ...answer,
+        created: new Date(answer.created.substr(0, 19)),
+      })),
+});
+
 const wait = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
 export const getUnansweredQuestions = async (): Promise<QuestionData[]> => {
-  await wait(500);
-  return questions.filter((q) => q.answers.length === 0);
+  try {
+    const result = await http<undefined, QuestionDataFromServer[]>({
+      path: '/questions/unanswered',
+    });
+    if (result.parsedBody) return result.parsedBody.map(mapQuestionFromServer);
+    else return [];
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
 };
 
 export const getQuestion = async (
   questionId: number,
 ): Promise<QuestionData | null> => {
-  await wait(500);
-  const results = questions.filter((q) => q.questionId === questionId);
-  return results.length === 0 ? null : results[0];
+  try {
+    const result = await http<undefined, QuestionDataFromServer>({
+      path: `/questions/${questionId}`,
+    });
+    if (result.ok && result.parsedBody)
+      return mapQuestionFromServer(result.parsedBody);
+    else return null;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
 };
 
 export const searchQuestions = async (
   criteria: string,
 ): Promise<QuestionData[]> => {
-  await wait(500);
-  return questions.filter(
-    (q) =>
-      q.title.toLowerCase().indexOf(criteria.toLowerCase()) >= 0 ||
-      q.content.toLowerCase().indexOf(criteria.toLowerCase()) >= 0,
-  );
+  try {
+    const result = await http<undefined, QuestionDataFromServer[]>({
+      path: `/questions?search=${criteria}`,
+    });
+    if (result.ok && result.parsedBody)
+      return result.parsedBody.map(mapQuestionFromServer);
+    else return [];
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
 };
 
 export const postQuestion = async (
