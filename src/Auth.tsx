@@ -5,6 +5,7 @@ import React, {
   createContext,
   FC,
 } from 'react';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 import createAuth0Client from '@auth0/auth0-spa-js';
 import Auth0Client from '@auth0/auth0-spa-js/dist/typings/Auth0Client';
 import { authSettings } from './AppSettings';
@@ -17,15 +18,26 @@ interface Auth0User {
 interface IAuth0Context {
   isAuthenticated: boolean;
   user?: Auth0User;
-  signIn: () => void;
-  signOut: () => void;
+  signIn: () => AuthStatus;
+  signOut: () => AuthStatus;
   loading: boolean;
+}
+
+export interface AuthStatus {
+  success: boolean;
+  message?: string;
 }
 
 export const Auth0Context = createContext<IAuth0Context>({
   isAuthenticated: false,
-  signIn: () => {},
-  signOut: () => {},
+  signIn: () => ({
+    success: false,
+    message: 'You are not currently signed in',
+  }),
+  signOut: () => ({
+    success: false,
+    message: 'You are not currently signed in',
+  }),
   loading: true,
 });
 
@@ -37,7 +49,10 @@ export const getAccessToken = async () => {
   return accessToken;
 };
 
-export const AuthProvider: FC = ({ children }) => {
+export const AuthProvider: FC<RouteComponentProps> = ({
+  children,
+  history,
+}) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<Auth0User | undefined>(undefined);
   const [auth0Client, setAuth0Client] = useState<Auth0Client>();
@@ -51,6 +66,7 @@ export const AuthProvider: FC = ({ children }) => {
         window.location.search.indexOf('code=') > -1
       ) {
         await auth0FromHook.handleRedirectCallback();
+        history.replace('/');
       }
       const isAuthenticatedFromHook = await auth0FromHook.isAuthenticated();
       if (isAuthenticatedFromHook) {
@@ -61,7 +77,7 @@ export const AuthProvider: FC = ({ children }) => {
       setLoading(false);
     };
     initAuth0();
-  }, []);
+  }, [history]);
   const getAuth0ClientFromState = () => {
     if (auth0Client === undefined) throw new Error('Auth0 client not set');
     return auth0Client;
@@ -73,12 +89,20 @@ export const AuthProvider: FC = ({ children }) => {
         user,
         signIn: () => {
           getAuth0ClientFromState().loginWithRedirect();
+          return { success: true };
         },
-        signOut: () =>
+        signOut: () => {
+          if (!isAuthenticated)
+            return {
+              success: false,
+              message: 'You are not currently logged in',
+            };
           getAuth0ClientFromState().logout({
             client_id: authSettings.client_id,
             returnTo: window.location.origin + '/signout-callback',
-          }),
+          });
+          return { success: true };
+        },
         loading,
       }}
     >
@@ -86,3 +110,5 @@ export const AuthProvider: FC = ({ children }) => {
     </Auth0Context.Provider>
   );
 };
+
+export const AuthProviderWithRouter = withRouter(AuthProvider);

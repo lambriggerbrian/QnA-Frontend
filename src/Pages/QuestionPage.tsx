@@ -19,6 +19,7 @@ import { Form, required, minLength, Values } from '../Components/Form';
 import { AnswersList } from '../Components/AnswersList';
 import { gray3, gray6 } from '../Styles';
 import { Field } from '../Components/Field';
+import { useAuth } from '../Auth';
 
 interface RouteParams {
   questionId: string;
@@ -101,6 +102,7 @@ export const QuestionPage: FC<RouteComponentProps<RouteParams>> = ({
     });
     return { success: result ? true : false };
   };
+  const { isAuthenticated } = useAuth();
   return (
     <Page title={`Question #${match.params.questionId}`}>
       <div
@@ -142,20 +144,22 @@ export const QuestionPage: FC<RouteComponentProps<RouteParams>> = ({
               ${question.created.toLocaleDateString()} 
               ${question.created.toLocaleTimeString()}`}
             </div>
-            <Form
-              submitCaption="Submit Your Answer"
-              validationRules={{
-                content: [
-                  { validator: required },
-                  { validator: minLength, arg: 50 },
-                ],
-              }}
-              onSubmit={handleSubmit}
-              failureMessage="There was a problem with your answer"
-              successMessage="Your answer was successfully submitted"
-            >
-              <Field name="content" label="Content" type="TextArea"></Field>
-            </Form>
+            {isAuthenticated && (
+              <Form
+                submitCaption="Submit Your Answer"
+                validationRules={{
+                  content: [
+                    { validator: required },
+                    { validator: minLength, arg: 50 },
+                  ],
+                }}
+                onSubmit={handleSubmit}
+                failureMessage="There was a problem with your answer"
+                successMessage="Your answer was successfully submitted"
+              >
+                <Field name="content" label="Content" type="TextArea"></Field>
+              </Form>
+            )}
             <AnswersList data={question.answers} />
           </Fragment>
         )}

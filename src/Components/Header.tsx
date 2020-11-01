@@ -34,9 +34,6 @@ export const Header: FC<RouteComponentProps> = ({ history, location }) => {
     history.push(`/search?criteria=${search}`);
   };
   const { isAuthenticated, user, loading } = useAuth();
-  console.log(
-    `Context = isAuthenticated: ${isAuthenticated}, user: ${user}, loading: ${loading}`,
-  );
   return (
     <div
       css={css`
@@ -101,7 +98,10 @@ export const Header: FC<RouteComponentProps> = ({ history, location }) => {
           </div>
         ) : (
           <div>
-            <Link to="/signin" css={buttonStyle}>
+            <Link
+              to={{ pathname: '/signin', state: { from: history.location } }}
+              css={buttonStyle}
+            >
               <UserIcon />
               <span>Sign In</span>
             </Link>

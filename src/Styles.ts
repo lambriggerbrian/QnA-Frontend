@@ -41,3 +41,9 @@ export const PrimaryButton = styled.button`
 export const StatusText = styled.div`
   text-align: center;
 `;
+
+export const SubtleText = styled.div`
+  text-align: center;
+  font-size: 12px;
+  font-style: italic;
+`;

@@ -1,6 +1,5 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
-import { lazy, Suspense } from 'react';
 import { Provider } from 'react-redux';
 import { BrowserRouter, Route, Redirect, Switch } from 'react-router-dom';
 import { configureStore } from './Store';
@@ -12,16 +11,17 @@ import { HeaderWithRouter as Header } from './Components/Header';
 import HomePage from './Pages/HomePage';
 import { NotFoundPage } from './Pages/NotFoundPage';
 import { fontFamily, fontSize, gray2 } from './Styles';
-import { AuthProvider } from './Auth';
-const AskPage = lazy(() => import('./Pages/AskPage'));
+import { AuthProviderWithRouter as AuthProvider } from './Auth';
+import AskPage from './Pages/AskPage';
+import { AuthorizedPage } from './Pages/AuthorizedPage';
 
 const store = configureStore();
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <Provider store={store}>
-        <BrowserRouter>
+    <Provider store={store}>
+      <BrowserRouter>
+        <AuthProvider>
           <div
             css={css`
               font-family: ${fontFamily};
@@ -35,26 +35,18 @@ const App: React.FC = () => {
               <Route exact path="/" component={HomePage} />
               <Route path="/search" component={SearchPage} />
               <Route path="/ask">
-                <Suspense
-                  fallback={
-                    <div
-                      css={css`
-                        margin-top: 100px;
-                        text-align: center;
-                      `}
-                    >
-                      Loading...
-                    </div>
-                  }
-                >
+                <AuthorizedPage>
                   <AskPage />
-                </Suspense>
+                </AuthorizedPage>
               </Route>
               <Route
                 path="/signin"
                 render={() => <SignInPage action="signin" />}
               />
-              <Route path="/signin-callback" component={HomePage} />
+              <Route
+                path="/signin-callback"
+                render={() => <SignInPage action="signin-callback" />}
+              />
               <Route
                 path="/signout"
                 render={() => <SignOutPage action="signout" />}
@@ -67,9 +59,9 @@ const App: React.FC = () => {
               <Route component={NotFoundPage} />
             </Switch>
           </div>
-        </BrowserRouter>
-      </Provider>
-    </AuthProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </Provider>
   );
 };
 
