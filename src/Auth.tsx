@@ -43,12 +43,6 @@ export const Auth0Context = createContext<IAuth0Context>({
 
 export const useAuth = () => useContext(Auth0Context);
 
-export const getAccessToken = async () => {
-  const auth0FromHook = await createAuth0Client(authSettings);
-  const accessToken = await auth0FromHook.getTokenSilently();
-  return accessToken;
-};
-
 export const AuthProvider: FC<RouteComponentProps> = ({
   children,
   history,
@@ -109,6 +103,12 @@ export const AuthProvider: FC<RouteComponentProps> = ({
       {children}
     </Auth0Context.Provider>
   );
+};
+
+export const getAccessToken = async () => {
+  const auth0FromHook = await createAuth0Client(authSettings);
+  const accessToken = await auth0FromHook.getTokenSilently();
+  return accessToken;
 };
 
 export const AuthProviderWithRouter = withRouter(AuthProvider);

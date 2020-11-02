@@ -5,7 +5,6 @@ import { BrowserRouter, Route, Redirect, Switch } from 'react-router-dom';
 import { configureStore } from './Store';
 import { SignInPage } from './Pages/SignInPage';
 import { SignOutPage } from './Pages/SignOutPage';
-import { QuestionPage } from './Pages/QuestionPage';
 import { SearchPage } from './Pages/SearchPage';
 import { HeaderWithRouter as Header } from './Components/Header';
 import HomePage from './Pages/HomePage';
@@ -13,6 +12,7 @@ import { NotFoundPage } from './Pages/NotFoundPage';
 import { fontFamily, fontSize, gray2 } from './Styles';
 import { AuthProviderWithRouter as AuthProvider } from './Auth';
 import AskPage from './Pages/AskPage';
+import QuestionPage from './Pages/QuestionPage';
 import { AuthorizedPage } from './Pages/AuthorizedPage';
 
 const store = configureStore();

@@ -19,6 +19,7 @@ import {
 } from '../Components/Form';
 import { Field } from '../Components/Field';
 import { PostQuestionData, QuestionData } from '../Components/QuestionsData';
+import { useAuth } from '../Auth';
 
 interface Props {
   postQuestion: (question: PostQuestionData) => Promise<void>;
@@ -36,11 +37,12 @@ export const AskPage: FC<Props> = ({
       clearPostedQuestion();
     };
   }, [clearPostedQuestion]);
+  const { user } = useAuth();
   const handleSubmit = (values: Values) => {
     postQuestion({
       title: values.title,
       content: values.content,
-      userName: 'Fred',
+      userName: user!.name,
       created: new Date(),
     });
   };

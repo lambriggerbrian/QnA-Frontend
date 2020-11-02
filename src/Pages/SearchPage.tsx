@@ -11,11 +11,15 @@ export const SearchPage: FC<RouteComponentProps> = ({ location }) => {
   const searchParams = new URLSearchParams(location.search);
   const search = searchParams.get('criteria') || '';
   useEffect(() => {
+    let isMounted = true;
     const doSearch = async (criteria: string) => {
       const results = await searchQuestions(criteria);
-      setQuestions(results);
+      if (isMounted) setQuestions(results);
     };
     doSearch(search);
+    return () => {
+      isMounted = false;
+    };
   }, [search]);
   return (
     <Page title="Search Results">

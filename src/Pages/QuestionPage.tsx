@@ -1,6 +1,7 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core';
 import { FC, useState, Fragment, useEffect } from 'react';
+import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router-dom';
 import {
   HubConnectionBuilder,
@@ -11,22 +12,45 @@ import { Page } from './Page';
 import {
   QuestionData,
   getQuestion,
-  postAnswer,
   mapQuestionFromServer,
   QuestionDataFromServer,
+  PostAnswerData,
+  AnswerData,
 } from '../Components/QuestionsData';
-import { Form, required, minLength, Values } from '../Components/Form';
+import {
+  Form,
+  required,
+  minLength,
+  Values,
+  SubmitResult,
+} from '../Components/Form';
 import { AnswersList } from '../Components/AnswersList';
 import { gray3, gray6 } from '../Styles';
 import { Field } from '../Components/Field';
 import { useAuth } from '../Auth';
+import {
+  AppState,
+  clearPostedQuestionActionCreator,
+  postAnswerActionCreator,
+} from '../Store';
+import { ThunkDispatch } from 'redux-thunk';
+import { AnyAction } from 'redux';
 
 interface RouteParams {
   questionId: string;
 }
 
-export const QuestionPage: FC<RouteComponentProps<RouteParams>> = ({
+interface Props {
+  postAnswer: (answer: PostAnswerData) => Promise<void>;
+  postedAnswerResult?: AnswerData;
+  clearPostedAnswer: () => void;
+}
+
+export const QuestionPage: FC<RouteComponentProps<RouteParams> & Props> = ({
   match,
+  postAnswer,
+  postedAnswerResult,
+  clearPostedAnswer,
 }) => {
   const [question, setQuestion] = useState<QuestionData | null>(null);
   const setUpSignalRConnection = async (questionId: number) => {
@@ -74,9 +98,10 @@ export const QuestionPage: FC<RouteComponentProps<RouteParams>> = ({
     }
   };
   useEffect(() => {
+    let isMounted = true;
     const doGetQuestion = async (questionId: number) => {
       const foundQuestion = await getQuestion(questionId);
-      setQuestion(foundQuestion);
+      if (isMounted) setQuestion(foundQuestion);
     };
     let connection: HubConnection;
     if (match.params.questionId) {
@@ -87,21 +112,26 @@ export const QuestionPage: FC<RouteComponentProps<RouteParams>> = ({
       });
     }
     return function cleanUp() {
+      isMounted = false;
+      clearPostedAnswer();
       if (match.params.questionId) {
         const questionId = Number(match.params.questionId);
         cleanUpSignalRConnection(questionId, connection);
       }
     };
-  }, [match.params.questionId]);
-  const handleSubmit = async (values: Values) => {
-    const result = await postAnswer({
+  }, [clearPostedAnswer, match.params.questionId]);
+  const handleSubmit = (values: Values) => {
+    postAnswer({
       questionId: question!.questionId,
       content: values.content,
       userName: 'Fred',
       created: new Date(),
     });
-    return { success: result ? true : false };
   };
+  let submitResult: SubmitResult | undefined;
+  if (postedAnswerResult) {
+    submitResult = { success: postedAnswerResult !== undefined };
+  }
   const { isAuthenticated } = useAuth();
   return (
     <Page title={`Question #${match.params.questionId}`}>
@@ -154,6 +184,7 @@ export const QuestionPage: FC<RouteComponentProps<RouteParams>> = ({
                   ],
                 }}
                 onSubmit={handleSubmit}
+                submitResult={submitResult}
                 failureMessage="There was a problem with your answer"
                 successMessage="Your answer was successfully submitted"
               >
@@ -167,3 +198,19 @@ export const QuestionPage: FC<RouteComponentProps<RouteParams>> = ({
     </Page>
   );
 };
+
+const mapStateToProps = (store: AppState) => {
+  return {
+    postedAnswerResult: store.answers.postedResult,
+  };
+};
+
+const mapDispatchToProps = (dispatch: ThunkDispatch<any, any, AnyAction>) => {
+  return {
+    postAnswer: (answer: PostAnswerData) =>
+      dispatch(postAnswerActionCreator(answer)),
+    clearPostedAnswer: () => dispatch(clearPostedQuestionActionCreator()),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(QuestionPage);

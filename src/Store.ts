@@ -14,6 +14,9 @@ import {
   getUnansweredQuestions,
   postQuestion,
   PostQuestionData,
+  PostAnswerData,
+  AnswerData,
+  postAnswer,
 } from './Components/QuestionsData';
 
 interface QuestionsState {
@@ -70,6 +73,7 @@ export const postQuestionActionCreator: ActionCreator<ThunkAction<
   PostQuestionData,
   PostedQuestionAction
 >> = (question: PostQuestionData) => {
+  console.log(question);
   return async (dispatch: Dispatch) => {
     const result = await postQuestion(question);
     const postedQuestionAction: PostedQuestionAction = {
@@ -122,14 +126,63 @@ const questionsReducer: Reducer<QuestionsState, QuestionsActions> = (
   return state;
 };
 
+interface AnswersState {
+  readonly loading: boolean;
+  readonly postedResult?: AnswerData;
+}
+
+const initialAnswersState: AnswersState = {
+  loading: false,
+};
+
+export interface PostedAnswerAction extends Action<'PostedAnswer'> {
+  result: AnswerData | undefined;
+}
+
+type AnswersActions = PostedAnswerAction | never;
+
+export const postAnswerActionCreator: ActionCreator<ThunkAction<
+  Promise<void>,
+  AnswerData,
+  PostAnswerData,
+  PostedAnswerAction
+>> = (answer: PostAnswerData) => {
+  console.log(answer);
+  return async (dispatch: Dispatch) => {
+    const result = await postAnswer(answer);
+    const postedAnswerAction: PostedAnswerAction = {
+      type: 'PostedAnswer',
+      result,
+    };
+    dispatch(postedAnswerAction);
+  };
+};
+
+export const clearPostedAnswerActionCreator: ActionCreator<PostedAnswerAction> = () => {
+  const postedAnswerAction: PostedAnswerAction = {
+    type: 'PostedAnswer',
+    result: undefined,
+  };
+  return postedAnswerAction;
+};
+
+const answersReducer: Reducer<AnswersState, AnswersActions> = (
+  state = initialAnswersState,
+  action,
+) => {
+  return { ...state, postedResult: action.result };
+};
+
 const neverReached = (never: never) => {};
 
 const rootReducer = combineReducers<AppState>({
   questions: questionsReducer,
+  answers: answersReducer,
 });
 
 export interface AppState {
   readonly questions: QuestionsState;
+  readonly answers: AnswersState;
 }
 
 export function configureStore(): Store<AppState> {

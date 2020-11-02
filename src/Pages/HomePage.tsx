@@ -25,9 +25,13 @@ const HomePage: FC<Props> = ({
   getUnansweredQuestions,
 }) => {
   useEffect(() => {
+    let isMounted = true;
     if (questions === null) {
-      getUnansweredQuestions();
+      if (isMounted) getUnansweredQuestions();
     }
+    return () => {
+      isMounted = false;
+    };
   }, [questions, getUnansweredQuestions]);
   const handleAskQuestionClick = () => {
     history.push('/ask');

@@ -98,10 +98,7 @@ export const Header: FC<RouteComponentProps> = ({ history, location }) => {
           </div>
         ) : (
           <div>
-            <Link
-              to={{ pathname: '/signin', state: { from: history.location } }}
-              css={buttonStyle}
-            >
+            <Link to="/signin" css={buttonStyle}>
               <UserIcon />
               <span>Sign In</span>
             </Link>
